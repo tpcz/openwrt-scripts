@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# auto reconnect script to a given interface. Modified from 
+# original script by "Gril" found on Github
+
+# place this script to /etc/hotplug.d/99-keepalive
+
+# interface, that you want to reconnect automatically
+KEPT_IFACE=wwan
+# log file
+LOG_FILE=/tmp/keepalive.log
+
+echo "Keep allive called: action=$ACTION interaface=$INTERFACE device=$DEVICE" >> $LOG_FILE
+
+if [ "$ACTION" = "ifdown" -a "$INTERFACE" = "$KEPT_IFACE" ]; then
+echo "Entering IF statement" >> /tmp/mylog
+  COUNTER="0"
+  IS_CONNECTED="NO"
+
+  while [ "$IS_CONNECTED" = NO ]; do
+        echo "Entered While" >> /tmp/mylog
+        sleep 1
+        ifstatus $INTERFACE | grep '"up": true'
+        if [ "$?" != 0 ]; then
+            IS_CONNECTED=YES
+            let COUNTER++
+            echo "Log from /etc/hotplug.d/iface/99-keepwanalivei"
+            logger -t DEBUG "Interface keepalive : attempt #${COUNTER} to reconnect on $INTERFACE"
+            echo            "Interface keepalive : attempt #${COUNTER} to reconnect on $INTERFACE" >> $LOG_FILE
+            ifup $INTERFACE
+            sleep 10 #sec
+        else
+            IS_CONNECTED=YES
+        fi
+  done
+fi
